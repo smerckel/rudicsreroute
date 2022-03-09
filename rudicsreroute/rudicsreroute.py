@@ -1,8 +1,10 @@
 import asyncio
+import socket
 
 import logging
 logging.basicConfig(filename='rudicsreroute.log',
-                    encoding='utf-8', level=logging.DEBUG)
+                    format='%(asctime)s %(message)s',
+                    level=logging.DEBUG)
 
 # This module can be used to redirect TCP traffic arriving on one port
 # to an other. The intended use is to divert the incoming connection
@@ -47,7 +49,7 @@ class RerouteServer(object):
         
     async def main(self):
         server = await asyncio.start_server(
-            self.handle_connection, '127.0.0.1', self.port)
+            self.handle_connection, socket.gethostname(), self.port)
 
         addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
         logging.info(f'Serving on {addrs}')
@@ -91,7 +93,7 @@ class RerouteServer36(object):
 
     async def main(self):
         server = await asyncio.start_server(
-            self.handle_connection, '127.0.0.1', self.port)
+            self.handle_connection, socket.gethostname(), self.port)
 
         addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
         logging.info(f'Serving on {addrs}')
