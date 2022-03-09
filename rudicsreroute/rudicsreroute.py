@@ -1,5 +1,9 @@
 import asyncio
 
+import logging
+logging.basicConfig(filename='rudicsreroute.log',
+                    encoding='utf-8', level=logging.DEBUG)
+
 # This module can be used to redirect TCP traffic arriving on one port
 # to an other. The intended use is to divert the incoming connection
 # from a rudics server to a dockserver to a different dockserver.
@@ -31,6 +35,7 @@ class RerouteServer(object):
     async def handle_connection(self, reader, writer):
         reader_remote, writer_remote = await asyncio.open_connection(self.remote_host,
                                                                      self.remote_port)
+        logging.info("Received a connection.")
         tasks = []
         tasks.append(asyncio.create_task(self.forward_transport(reader, writer_remote)))
         tasks.append(asyncio.create_task(self.forward_transport(reader_remote, writer)))
@@ -38,13 +43,14 @@ class RerouteServer(object):
         await asyncio.gather(tasks[0])
         writer.close()
         writer_remote.close()
+        logging.info("Closed connection.")
         
     async def main(self):
         server = await asyncio.start_server(
             self.handle_connection, '127.0.0.1', self.port)
 
         addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
-        print(f'Serving on {addrs}')
+        logging.info(f'Serving on {addrs}')
 
         async with server:
             await server.serve_forever()
@@ -74,20 +80,21 @@ class RerouteServer36(object):
     async def handle_connection(self, reader, writer):
         reader_remote, writer_remote = await asyncio.open_connection(self.remote_host,
                                                                      self.remote_port)
-
+        logging.info("Received a connection.")
         task0 = asyncio.ensure_future(self.forward_transport(reader, writer_remote))
         task1 = asyncio.ensure_future(self.forward_transport(reader_remote, writer))
         await asyncio.gather(task0) # wait until the incomming connection drops
         task1.cancel() # cancel the task1
         writer.close()
         writer_remote.close()
-        
+        logging.info("Closed onnection.")
+
     async def main(self):
         server = await asyncio.start_server(
             self.handle_connection, '127.0.0.1', self.port)
 
         addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
-        print(f'Serving on {addrs}')
+        logging.info(f'Serving on {addrs}')
 
         #Never stop...
         while True:
